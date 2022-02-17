@@ -66,12 +66,12 @@ Instead, when the two interfaces go online again it is not necessary to perform 
 
 This algorithm is executed when a link goes down, and so the two incident interfaces go down too. The switches the two interfaces belong to receive a message about their disconnection and, in order to overcome the failure, some group tables and flows are installed. 
 
-<img src="images\2_linkFailure.svg" alt="2_linkFailure.svg" style="zoom:120%;" />
+<img src="images/2_linkFailure.svg" alt="2_linkFailure.svg" style="zoom:120%;" />
 
 In particular, the type of group table that helps to bypass the failed link is the *fast failover* one: it is made of buckets which, in turn, contains a watch port or/and group and a set of actions associated. A group table is used when the flow rule that specifies it as action is matched. The buckets are stored in the order given by the programmer: the selected bucket is the first whose watch port and/or group are enabled/working. If no bucket is matched, the packet is dropped. 
 With the buckets of the fast failover group table is possible to implement the two [paths](##Paths). Let us define the following group tables: 
 
-![3_groupTables.svg](images\3_groupTables.svg)
+![3_groupTables.svg](images/3_groupTables.svg)
 
 The idea behind the two is the following: if a failure involves two interfaces it is necessary to change the traversing of the network from the clockwise direction to the counter-clockwise (or vice versa). It can be summarized by the following sentences: if a packet is received from an interface forward it to the second if available. If not, forward it back from the first if available, drop it otherwise (remember that for the *assumption1* there are only two interfaces on each switch, without considering those for the hosts). The next switches has the flow rules defined in [paths](##Paths) (or the pair of group table shown above if previously affected by a failure) and so the packet is forwarded from one interface to another until the switch connected to the destination host is reached. 
 
@@ -82,7 +82,7 @@ The flow necessary to use the two tables are the following:
 	in_port=2,actions=group:51
 ```
 
-![4_pathAfterFailure.svg](images\4_pathAfterFailure.svg)
+![4_pathAfterFailure.svg](images/4_pathAfterFailure.svg)
 
 In the example, on S3 the group tables act as a **mirror** and, because the first flow rule is matched, the group whose id is 50 is executed: since the second interface is down, it performs the action shown in the bucket 2. 
 
@@ -106,7 +106,7 @@ Also, there are benefits in the long term: once the fast failover group tables a
 
 If the advantages are only about the control plane and the time required to react to the failures, from the point of view of data plane there are some cons. Considering again the image above, once a failure happens and the group tables are installed, since the modifications are performed only on the two interfaces involved in the failure, the switches having the host connected will always send the packet in the direction of S3 wasting bandwidth and time (in this case two hops more are traversed). Those switches have no way to know the failure happened. The worse case is when the failure happens next to the destination host on the "main" path (where main we mean the path initially installed on the switches):
 
-![4_worseFailureCase.drawio](images\5_worseFailureCase.svg)
+![4_worseFailureCase.drawio](images/5_worseFailureCase.svg)
 
 The ring topology is traversed twice.
 
