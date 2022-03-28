@@ -104,21 +104,27 @@ class MyFirstApp(app_manager.RyuApp):
 			datapath.send_msg(req)
 
 			#deleting all pre-existing flows
-			parser = datapath.ofproto_parser
 			ofproto = datapath.ofproto
+			parser = datapath.ofproto_parser
 			empty_match = parser.OFPMatch()
 			instructions = []
 			flow_mod = self.remove_table_flows(datapath, 0, empty_match, instructions)
 			datapath.send_msg(flow_mod)
 
-			#installing new flow: if the in_port is the one we use to send back the packets (so the in_port), if the second one is available send to it, 							otherwise send it back
+			#installing new flow: if the in_port is the one we use to send back the packets (so the in_port), if the second one is available send to it, 							otherwise send it back	(if the packet is ip and the destination either h1 or h2 to avoid loops)
 			actions = [parser.OFPActionGroup(51)]
-			match = parser.OFPMatch(in_port=out_port)
+			match = parser.OFPMatch(in_port=out_port, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.2.2")
+			self.add_flow(datapath, 1, match, actions)
+			actions = [parser.OFPActionGroup(51)]
+			match = parser.OFPMatch(in_port=out_port, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.1.2")
 			self.add_flow(datapath, 1, match, actions)
 			
 			#installing new flow: (viceversa)
 			actions = [parser.OFPActionGroup(52)]
-			match = parser.OFPMatch(in_port=port)	#if the in_port is the one we use to send back the packets (so the in_port)
+			match = parser.OFPMatch(in_port=port, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.2.2")	#if the in_port is the one we use to send back the packets (so the in_port)
+			self.add_flow(datapath, 1, match, actions)
+			actions = [parser.OFPActionGroup(52)]
+			match = parser.OFPMatch(in_port=port, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.1.2")	#if the in_port is the one we use to send back the packets (so the in_port)
 			self.add_flow(datapath, 1, match, actions)
 
 			if switchId == 1:
@@ -243,13 +249,19 @@ class MyFirstApp(app_manager.RyuApp):
 
 		# installing basic flow rules
 		#all switches must install these rules:
-		#sudo ovs-ofctl add-flow s1 priority=1,ip,in_port=1,actions=output:2 -O OpenFlow13
+		#sudo ovs-ofctl add-flow s1 priority=1,ip,in_port=1,ip4,ipv4_dest=10.0.2.2 OR 10.0.1.2 actions=output:2 -O OpenFlow13
 		actions = [parser.OFPActionOutput(2)]
-		match = parser.OFPMatch(in_port=1)
+		match = parser.OFPMatch(in_port=1, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.2.2")
 		self.add_flow(datapath, 1, match, actions)
-		#sudo ovs-ofctl add-flow s1 priority=1,ip,in_port=2,actions=output:1 -O OpenFlow13
+		actions = [parser.OFPActionOutput(2)]
+		match = parser.OFPMatch(in_port=1, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.1.2")
+		self.add_flow(datapath, 1, match, actions)
+		#sudo ovs-ofctl add-flow s1 priority=1,ip,in_port=2,ip4,ipv4_dest=10.0.2.2 OR 10.0.1.2 actions=output:1 -O OpenFlow13
 		actions = [parser.OFPActionOutput(1)]
-		match = parser.OFPMatch(in_port=2)
+		match = parser.OFPMatch(in_port=2, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.2.2")
+		self.add_flow(datapath, 1, match, actions)
+		actions = [parser.OFPActionOutput(1)]
+		match = parser.OFPMatch(in_port=2, eth_type=ether_types.ETH_TYPE_IP, ipv4_dst="10.0.1.2")
 		self.add_flow(datapath, 1, match, actions)
 
 		#for the switches havin a host connected
