@@ -1,6 +1,6 @@
 # SDN - Link failure detection
 
-Team members: Giulio Siano, Francesco Gregori
+Team members: Giulio Siano
 
 Table of contents:
 
