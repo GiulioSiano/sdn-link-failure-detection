@@ -4,7 +4,21 @@ Team members: Giulio Siano
 
 Table of contents:
 
-[TOC]
+* Objectives
+* Topology
+* Paths
+* Startup and first configuration
+* Periodic monitoring
+* On link status changing
+* The algorithm
+* Pro and cons
+* Results
+	- With the implemented algorithm
+	- Without the implemented algorithm
+
+
+Usage
+
 
 ## Objectives
 1. Design a ring network and monitor the link status through openflow functions
